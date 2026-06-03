@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Заявки пользователя | Панель менеджера{% endblock %}
+
+{% block meta %}
+<meta name="description" content="Просмотр заявок пользователя в системе учёта задач книжного магазина">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'manager_dashboard' %}">Панель управления</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'request_list' %}">Все заявки</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Заявки пользователя</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user-circle fa-2x me-3"></i>
+                        <div>
+                            <h4 class="mb-0">Пользователь: {{ customer.username }}</h4>
+                            <small class="opacity-75">Просмотр всех заявок пользователя</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 text-center h-100">
+                                <i class="fas fa-user fa-2x text-primary mb-2"></i>
+                                <h6 class="text-muted mb-1">Полное имя</h6>
+                                <p class="mb-0 fw-bold">{{ customer.get_full_name|default:"Не указано" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 text-center h-100">
+                                <i class="fas fa-envelope fa-2x text-info mb-2"></i>
+                                <h6 class="text-muted mb-1">Email</h6>
+                                <p class="mb-0 fw-bold">{{ customer.email|default:"Не указан" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 text-center h-100">
+                                <i class="fas fa-calendar-alt fa-2x text-success mb-2"></i>
+                                <h6 class="text-muted mb-1">Дата регистрации</h6>
+                                <p class="mb-0 fw-bold">{{ customer.date_joined|date:"d.m.Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="border rounded p-3 text-center h-100">
+                                <i class="fas fa-tasks fa-2x text-warning mb-2"></i>
+                                <h6 class="text-muted mb-1">Всего заявок</h6>
+                                <p class="mb-0 fw-bold">{{ total_requests }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-top">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Роль в системе:</strong>
+                                {% if customer.role.role == 'customer' %}
+                                    <span class="badge bg-secondary">Клиент</span>
+                                {% elif customer.role.role == 'manager' %}
+                                    <span class="badge bg-primary">Менеджер</span>
+                                {% elif customer.role.role == 'admin' %}
+                                    <span class="badge bg-danger">Администратор</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <a href="{% url 'admin:auth_user_change' customer.id %}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                    <i class="fas fa-cog"></i> Редактировать в админке
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-light shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-warning"></i>
+                    <h5 class="mt-2 mb-0">{{ new_requests }}</h5>
+                    <small class="text-muted">Новые</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-light shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-spinner fa-2x text-primary"></i>
+                    <h5 class="mt-2 mb-0">{{ in_progress_requests }}</h5>
+                    <small class="text-muted">В работе</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-light shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                    <h5 class="mt-2 mb-0">{{ completed_requests }}</h5>
+                    <small class="text-muted">Выполнено</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-light shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-times-circle fa-2x text-danger"></i>
+                    <h5 class="mt-2 mb-0">{{ rejected_requests }}</h5>
+                    <small class="text-muted">Отклонено</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> История заявок
+                </h5>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter"></i> Фильтр
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="?status=">Все заявки</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="?status=new">Новые</a></li>
+                        <li><a class="dropdown-item" href="?status=in_progress">В работе</a></li>
+                        <li><a class="dropdown-item" href="?status=completed">Выполненные</a></li>
+                        <li><a class="dropdown-item" href="?status=rejected">Отклонённые</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%">ID</th>
+                            <th style="width: 25%">Тема заявки</th>
+                            <th style="width: 12%">Категория</th>
+                            <th style="width: 10%">Статус</th>
+                            <th style="width: 10%">Приоритет</th>
+                            <th style="width: 15%">Исполнитель</th>
+                            <th style="width: 13%">Дата создания</th>
+                            <th style="width: 10%">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in object_list %}
+                        <tr>
+                            <td>#{{ request.id }}</td>
+                            <td>
+                                <a href="{% url 'request_detail' request.id %}" class="text-decoration-none fw-bold">
+                                    {{ request.title|truncatechars:60 }}
+                                </a>
+                                {% if request.deadline and request.status != 'completed' %}
+                                    {% if request.deadline < now %}
+                                        <span class="badge bg-danger ms-1">Просрочен</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>{{ request.category.name|default:"—" }}</td>
+                            <td>
+                                <span class="status-badge status-{{ request.status }}">
+                                    {{ request.get_status_display_with_color }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="priority-badge priority-{{ request.priority }}">
+                                    {{ request.get_priority_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if request.executor %}
+                                    {{ request.executor.username }}
+                                    <br><small class="text-muted">{{ request.executor.role.get_role_display }}</small>
+                                {% else %}
+                                    <span class="text-danger">Не назначен</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ request.created_date|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'request_detail' request.id %}" class="btn btn-outline-primary" title="Просмотр">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'change_request_status' request.id %}" class="btn btn-outline-warning" title="Сменить статус">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </a>
+                                    {% if not request.executor and request.status != 'completed' %}
+                                    <a href="{% url 'assign_executor' request.id %}" class="btn btn-outline-success" title="Назначить исполнителя">
+                                        <i class="fas fa-user-check"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">У пользователя нет заявок</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if is_paginated %}
+        <div class="card-footer bg-white">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'request_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Назад к списку заявок
+        </a>
+    </div>
+</div>
+{% endblock %}

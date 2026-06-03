@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Редактирование заявки #{{ form.instance.id }}
+    {% else %}
+        Создание новой заявки
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-header bg-dark text-white rounded-top-4">
+                    <div class="d-flex align-items-center">
+                        {% if form.instance.pk %}
+                            <i class="fas fa-edit fa-2x me-3"></i>
+                            <div>
+                                <h4 class="mb-0">Редактирование заявки</h4>
+                                <small class="opacity-75">Заявка #{{ form.instance.id }}</small>
+                            </div>
+                        {% else %}
+                            <i class="fas fa-plus-circle fa-2x me-3"></i>
+                            <div>
+                                <h4 class="mb-0">Создание новой заявки</h4>
+                                <small class="opacity-75">Заполните форму, чтобы создать заявку</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Пожалуйста, исправьте следующие ошибки:</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" id="requestForm">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-heading text-dark me-1"></i> Тема заявки <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="{{ form.title.name }}" 
+                                   id="{{ form.title.id_for_label }}" 
+                                   class="form-control" 
+                                   placeholder="Введите тему заявки"
+                                   value="{{ form.title.value|default:'' }}"
+                                   required>
+                            {% if form.title.errors %}
+                                <div class="text-danger small mt-1">{{ form.title.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Кратко опишите суть проблемы или задачи</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-align-left text-dark me-1"></i> Описание <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="{{ form.description.name }}" 
+                                      id="{{ form.description.id_for_label }}" 
+                                      class="form-control" 
+                                      rows="5" 
+                                      placeholder="Опишите проблему или задачу..." 
+                                      required>{{ form.description.value|default:'' }}</textarea>
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Подробно опишите проблему, задачу или запрос</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.category.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-tag text-dark me-1"></i> Категория
+                            </label>
+                            <select name="{{ form.category.name }}" 
+                                    id="{{ form.category.id_for_label }}" 
+                                    class="form-select">
+                                <option value="">---------</option>
+                                {% for category in form.category.field.queryset %}
+                                    <option value="{{ category.id }}" {% if form.category.value == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Выберите подходящую категорию (необязательно)</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <a href="{% url 'request_list' %}" class="btn btn-outline-secondary px-4">
+                            <i class="fas fa-times"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-dark px-5">
+                            <i class="fas fa-save"></i> 
+                            {% if form.instance.pk %}Сохранить изменения{% else %}Создать заявку{% endif %}
+                        </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4 bg-light border-0">
+                <div class="card-body">
+                    <h6 class="mb-2"><i class="fas fa-lightbulb text-warning"></i> Советы по оформлению заявки</h6>
+                    <ul class="small text-muted mb-0">
+                        <li>Указывайте конкретную тему, чтобы ответственный мог быстро понять суть</li>
+                        <li>В описании подробно опишите проблему: что произошло, когда, какие действия предпринимали</li>
+                        <li>После создания заявки менеджер назначит приоритет и исполнителя</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('requestForm');
+        const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+        const descriptionInput = document.getElementById('{{ form.description.id_for_label }}');
+        
+        form.addEventListener('submit', function(event) {
+            let hasError = false;
+            let errorMessage = '';
+            
+            if (!titleInput.value.trim()) {
+                hasError = true;
+                errorMessage = 'Пожалуйста, заполните тему заявки';
+                titleInput.focus();
+            } else if (!descriptionInput.value.trim()) {
+                hasError = true;
+                errorMessage = 'Пожалуйста, заполните описание заявки';
+                descriptionInput.focus();
+            }
+            
+            if (hasError) {
+                event.preventDefault();
+                alert(errorMessage);
+                return false;
+            }
+            
+            return true;
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    {% block meta %}
+    <meta name="description" content="Система учёта заявок и задач книжного магазина «Бакен»">
+    {% endblock %}
+    
+    <title>{% block title %}Система заявок | Книжный магазин «Бакен»{% endblock %}</title>
+    
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <div class="container">
+        <header class="site-header py-3">
+            <div class="row">
+                <div class="col-12 text-center text-md-start mb-3">
+                    <a href="{% url 'index' %}" class="logo-link" title="Главная">
+                        <img src="{% static 'images/header.png' %}" alt="Книжный магазин Бакен" height="60" class="img-fluid">
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 text-center text-md-end mb-2">
+                    <div class="small text-muted">
+                        <i class="fas fa-map-marker-alt me-1 text-secondary"></i> г. Красноярск, пр. Мира, 85 / ул. Диктатуры Пролетариата, 28<br>
+                        <i class="far fa-clock me-1 text-secondary"></i> с 11:00 до 20:00 без выходных и перерывов
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-12 text-center text-md-end">
+                    {% if user.is_authenticated %}
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i> {{ user.username }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'profile' %}">
+                                    <i class="fas fa-id-card me-2"></i> Мой профиль
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'request_list' %}">
+                                    <i class="fas fa-tasks me-2"></i> Мои заявки
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'request_create' %}">
+                                    <i class="fas fa-plus-circle me-2"></i> Создать заявку
+                                </a></li>
+                                {% if user.role.is_manager or user.role.is_admin %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'manager_dashboard' %}">
+                                        <i class="fas fa-chart-line me-2"></i> Панель управления
+                                    </a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Выйти
+                                </a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-sm btn-dark">
+                            <i class="fas fa-sign-in-alt me-1"></i> Войти
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row border-top pt-3">
+                <div class="col-12">
+                    <nav class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+                        <a href="{% url 'index' %}" class="text-decoration-none {% if request.resolver_match.url_name == 'index' %}fw-bold text-dark{% else %}text-secondary{% endif %}">
+                            <i class="fas fa-home me-1"></i> Главная
+                        </a>
+                        <a href="{% url 'request_list' %}" class="text-decoration-none {% if request.resolver_match.url_name == 'request_list' %}fw-bold text-dark{% else %}text-secondary{% endif %}">
+                            <i class="fas fa-tasks me-1"></i> Заявки
+                        </a>
+                        <a href="{% url 'request_create' %}" class="text-decoration-none text-secondary">
+                            <i class="fas fa-plus me-1"></i> Новая заявка
+                        </a>
+                        {% if user.is_authenticated and user.role.is_manager %}
+                            <a href="{% url 'manager_dashboard' %}" class="text-decoration-none text-secondary">
+                                <i class="fas fa-chart-line me-1"></i> Управление
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content my-4">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message|safe }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="site-footer mt-5 py-3 text-center text-muted border-top">
+            <div class="footer-links">
+                <a href="mailto:bakenbooks@gmail.com" class="text-decoration-none">
+                    <i class="fas fa-envelope"></i> bakenbooks@gmail.com
+                </a>
+                <span class="mx-2">|</span>
+                <span><i class="fas fa-phone"></i> +7 (391) 123-45-67</span>
+                <span class="mx-2">|</span>
+                <span>© 2024 Книжный магазин «Бакен»</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

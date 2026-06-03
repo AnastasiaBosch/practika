@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-user-circle text-dark me-2"></i> {{ user.username }}
+            </h1>
+            <small class="text-muted">Профиль пользователя</small>
+        </div>
+        {% if user.role.is_manager or user.role.is_admin %}
+            <span class="badge bg-dark">{{ user.role.get_role_display }}</span>
+        {% endif %}
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-5">
+            <div class="card border shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h6 class="mb-0">
+                        <i class="fas fa-address-card me-2"></i> Контактная информация
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 pb-2 border-bottom">
+                        <small class="text-muted d-block">Имя пользователя</small>
+                        <span class="fw-bold">{{ user.username }}</span>
+                    </div>
+                    <div class="mb-3 pb-2 border-bottom">
+                        <small class="text-muted d-block">Email</small>
+                        <span class="fw-bold">{{ user.email|default:"—" }}</span>
+                    </div>
+                    <div class="mb-3 pb-2 border-bottom">
+                        <small class="text-muted d-block">Дата регистрации</small>
+                        <span class="fw-bold">{{ user.date_joined|date:"d.m.Y" }}</span>
+                    </div>
+                    <div class="mt-3 pt-2">
+                        <a href="{% url 'contact_admin' %}" class="btn btn-sm btn-outline-secondary w-100">
+                            <i class="fas fa-envelope me-2"></i> Обратиться к администратору
+                        </a>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle"></i> Для смены email обратитесь к администратору
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card border shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-simple me-2"></i> Статистика заявок
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="p-3 border rounded bg-white">
+                                <i class="fas fa-tasks fa-2x text-primary opacity-75 mb-2"></i>
+                                <h4 class="mb-0 fw-bold">{{ total_requests }}</h4>
+                                <small class="text-muted">Всего</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 border rounded bg-white">
+                                <i class="fas fa-spinner fa-2x text-warning opacity-75 mb-2"></i>
+                                <h4 class="mb-0 fw-bold">{{ active_requests }}</h4>
+                                <small class="text-muted">В работе</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 border rounded bg-white">
+                                <i class="fas fa-check-circle fa-2x text-success opacity-75 mb-2"></i>
+                                <h4 class="mb-0 fw-bold">{{ completed_requests }}</h4>
+                                <small class="text-muted">Выполнено</small>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 text-center bg-warning bg-opacity-10 rounded border border-warning">
+                                <i class="fas fa-clock fa-lg text-warning mb-2"></i>
+                                <div class="fw-bold h5 mb-0 text-warning">{{ new_requests }}</div>
+                                <small class="text-secondary">Новых заявок</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 text-center bg-danger bg-opacity-10 rounded border border-danger">
+                                <i class="fas fa-times-circle fa-lg text-danger mb-2"></i>
+                                <div class="fw-bold h5 mb-0 text-danger">{{ rejected_requests }}</div>
+                                <small class="text-secondary">Отклонено</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border shadow-sm mt-4">
+        <div class="card-header bg-light border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-clock me-2"></i> Последние заявки
+                </h6>
+                <a href="{% url 'request_list' %}" class="btn btn-sm btn-link text-decoration-none">
+                    Все заявки <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if recent_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 8%">№</th>
+                                <th style="width: 42%">Тема</th>
+                                <th style="width: 15%">Статус</th>
+                                <th style="width: 15%">Приоритет</th>
+                                <th style="width: 12%">Дата</th>
+                                <th style="width: 8%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in recent_requests %}
+                            <tr>
+                                <td class="fw-bold text-muted">#{{ req.id }}</td>
+                                <td>
+                                    <a href="{% url 'request_detail' req.id %}" class="text-decoration-none fw-semibold">
+                                        {{ req.title|truncatechars:45 }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ req.status }}">
+                                        {{ req.get_status_display_with_color }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="priority-badge priority-{{ req.priority }}">
+                                        {{ req.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td class="text-muted small">{{ req.created_date|date:"d.m.Y" }}</td>
+                                <td>
+                                    <a href="{% url 'request_detail' req.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3 opacity-50"></i>
+                    <p class="text-muted mb-2">У вас пока нет заявок</p>
+                    <a href="{% url 'request_create' %}" class="btn btn-sm btn-primary">
+                        + Создать первую заявку
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between gap-3 mt-4">
+        <a href="{% url 'request_create' %}" class="btn btn-dark px-4">
+            <i class="fas fa-plus me-2"></i> Новая заявка
+        </a>
+        <a href="{% url 'logout' %}" class="btn btn-outline-danger px-4">
+            <i class="fas fa-sign-out-alt me-2"></i> Выйти
+        </a>
+    </div>
+</div>
+{% endblock %}

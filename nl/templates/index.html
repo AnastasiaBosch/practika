@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Главная | Система заявок — Книжный магазин «Бакен»{% endblock %}
+
+{% block meta %}
+<meta name="description" content="Система учёта заявок и задач книжного магазина Бакен. Создавайте заявки, отслеживайте статус, управляйте задачами.">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="p-4 bg-light rounded-3 shadow-sm">
+                <h1 class="display-5 fw-bold text-dark">
+                    {% if user.is_authenticated %}
+                        Добро пожаловать, {{ user.username }}!
+                    {% else %}
+                        Добро пожаловать в систему заявок «Бакен»
+                    {% endif %}
+                </h1>
+                <p class="lead">
+                    Система учёта заявок и задач книжного магазина «Бакен»
+                </p>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'login' %}" class="btn btn-dark btn-lg">
+                        <i class="fas fa-sign-in-alt"></i> Войти в систему
+                    </a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-user-plus"></i> Зарегистрироваться
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if user.is_authenticated %}
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm border-0">
+                    <div class="card-body">
+                        <i class="fas fa-tasks fa-3x text-secondary mb-2"></i>
+                        <h3 class="card-title text-dark">{{ total_my_requests|default:0 }}</h3>
+                        <p class="card-text text-muted">Моих заявок</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm border-0">
+                    <div class="card-body">
+                        <i class="fas fa-spinner fa-3x text-warning mb-2"></i>
+                        <h3 class="card-title text-dark">{{ my_active_requests|default:0 }}</h3>
+                        <p class="card-text text-muted">В работе</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm border-0">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                        <h3 class="card-title text-dark">{{ my_completed_requests|default:0 }}</h3>
+                        <p class="card-text text-muted">Выполнено</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center shadow-sm border-0 bg-light">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-3x text-secondary mb-2"></i>
+                        <h3 class="card-title text-dark">{{ my_active_requests|default:0 }}</h3>
+                        <p class="card-text text-muted">Активных</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if user.role.is_manager or user.role.is_admin %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-chart-line"></i> Статистика системы
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <div class="border rounded p-2 text-center">
+                                    <small class="text-muted">Всего заявок</small>
+                                    <h4 class="mb-0">{{ total_all_requests|default:0 }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="border rounded p-2 text-center">
+                                    <small class="text-muted">Новых</small>
+                                    <h4 class="mb-0 text-warning">{{ new_requests|default:0 }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="border rounded p-2 text-center">
+                                    <small class="text-muted">В работе</small>
+                                    <h4 class="mb-0">{{ in_progress_requests|default:0 }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="border rounded p-2 text-center">
+                                    <small class="text-muted">Без исполнителя</small>
+                                    <h4 class="mb-0 text-danger">{{ unassigned_requests|default:0 }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-history"></i> Мои последние заявки</span>
+                        <a href="{% url 'request_list' %}" class="btn btn-sm btn-light">Все заявки →</a>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_requests %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Тема</th>
+                                            <th>Статус</th>
+                                            <th>Приоритет</th>
+                                            <th>Дата создания</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for req in recent_requests %}
+                                        <tr>
+                                            <td>#{{ req.id }}</a></td>
+                                            <td>{{ req.title|truncatechars:40 }}</a></td>
+                                            <td>
+                                                <span class="status-badge status-{{ req.status }}">
+                                                    {{ req.get_status_display_with_color }}
+                                                </span>
+                                            </a></td>
+                                            <td>
+                                                <span class="priority-badge priority-{{ req.priority }}">
+                                                    {{ req.get_priority_display }}
+                                                </span>
+                                            </a></td>
+                                            <td>{{ req.created_date|date:"d.m.Y H:i" }}</a></td>
+                                            <td>
+                                                <a href="{% url 'request_detail' req.id %}" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </a></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">У вас пока нет заявок</p>
+                                <a href="{% url 'request_create' %}" class="btn btn-dark">
+                                    <i class="fas fa-plus"></i> Создать первую заявку
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 text-center shadow-sm border-0">
+                    <div class="card-body">
+                        <i class="fas fa-plus-circle fa-3x text-success mb-2"></i>
+                        <h5 class="card-title text-dark">Создавайте заявки</h5>
+                        <p class="card-text">Опишите проблему или задачу — и она попадёт в работу</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 text-center shadow-sm border-0">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line fa-3x text-secondary mb-2"></i>
+                        <h5 class="card-title text-dark">Отслеживайте статус</h5>
+                        <p class="card-text">Следите за выполнением заявок в реальном времени</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 text-center shadow-sm border-0">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-3x text-info mb-2"></i>
+                        <h5 class="card-title text-dark">Управляйте задачами</h5>
+                        <p class="card-text">Менеджеры назначают исполнителей и контролируют выполнение</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-3">
+            <p class="text-muted">
+                <i class="fas fa-lock"></i> Для работы с системой необходимо 
+                <a href="{% url 'login' %}" class="text-dark">войти</a> или 
+                <a href="{% url 'register' %}" class="text-dark">зарегистрироваться</a>
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

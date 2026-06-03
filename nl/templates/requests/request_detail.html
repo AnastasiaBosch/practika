@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Заявка #{{ request.id }} | {{ request.title }}{% endblock %}
+
+{% block meta %}
+<meta name="description" content="Детальная информация о заявке #{{ request.id }}: {{ request.title }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'request_list' %}">Заявки</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Заявка #{{ request.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h3 class="mb-0">
+                            <span class="text-muted">#{{ request.id }}</span>
+                            {{ request.title }}
+                        </h3>
+                        <small class="text-muted">
+                            Создана: {{ request.created_date|date:"d.m.Y H:i" }}
+                        </small>
+                    </div>
+                    <div class="mt-2 mt-sm-0">
+                        <span class="status-badge status-{{ request.status }}">
+                            {{ request.get_status_display_with_color }}
+                        </span>
+                        <span class="priority-badge priority-{{ request.priority }}">
+                            <i class="fas fa-flag"></i> {{ request.get_priority_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2"><i class="fas fa-align-left"></i> Описание</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ request.description|linebreaks }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <small class="text-muted d-block">Категория</small>
+                                <span class="fw-bold">
+                                    <i class="fas fa-tag"></i> {{ request.category.name|default:"Не указана" }}
+                                </span>
+                                {% if request.category.description %}
+                                    <br><small class="text-muted">{{ request.category.description }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <small class="text-muted d-block">Срок выполнения</small>
+                                <span class="fw-bold">
+                                    {% if request.deadline %}
+                                        <i class="fas fa-calendar-alt"></i> {{ request.deadline|date:"d.m.Y H:i" }}
+                                        {% if request.deadline < now and request.status not in 'completed,rejected' %}
+                                            <span class="badge bg-danger ms-2">Просрочен</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Не установлен</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-user"></i> Автор
+                                </small>
+                                <span class="fw-bold">{{ request.user.username }}</span>
+                                <br><small class="text-muted">{{ request.user.email }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-user-check"></i> Исполнитель
+                                </small>
+                                {% if request.executor %}
+                                    <span class="fw-bold">{{ request.executor.username }}</span>
+                                    <br><small class="text-muted">{{ request.executor.role.get_role_display }}</small>
+                                {% else %}
+                                    <span class="text-danger">Не назначен</span>
+                                    {% if can_assign %}
+                                        <a href="{% url 'assign_executor' request.id %}" class="btn btn-sm btn-secondary ms-2">
+                                            <i class="fas fa-plus"></i> Назначить
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if user.role.is_manager or user.role.is_admin %}
+                        {% if request.internal_notes %}
+                        <div class="alert alert-info mt-3">
+                            <h6><i class="fas fa-sticky-note"></i> Внутренние заметки</h6>
+                            <p class="mb-0">{{ request.internal_notes }}</p>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments"></i> Комментарии 
+                        <span class="badge bg-secondary">{{ comments.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if comments %}
+                        <div class="comments-list mb-4" style="max-height: 400px; overflow-y: auto;">
+                            {% for comment in comments %}
+                            <div class="comment-item border-bottom pb-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="text-dark">
+                                            <i class="fas fa-user-circle"></i> {{ comment.author.username }}
+                                        </strong>
+                                        {% if comment.author.role.is_manager %}
+                                            <span class="badge bg-secondary ms-1">Менеджер</span>
+                                        {% endif %}
+                                        <small class="text-muted ms-2">{{ comment.created_date|date:"d.m.Y H:i" }}</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    {{ comment.text|linebreaks }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3 text-muted">
+                            <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                            <p>Пока нет комментариев. Будьте первым!</p>
+                        </div>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'add_comment' request.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Добавить комментарий</label>
+                                {{ comment_form.text }}
+                            </div>
+                            <button type="submit" class="btn btn-dark">
+                                <i class="fas fa-paper-plane"></i> Отправить
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            {% if user.role.is_manager or user.role.is_admin %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs"></i> Действия</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'request_edit' request.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-edit"></i> Редактировать заявку
+                        </a>
+                        <a href="{% url 'change_request_status' request.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-exchange-alt"></i> Изменить статус
+                        </a>
+                        {% if not request.executor %}
+                        <a href="{% url 'assign_executor' request.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-user-plus"></i> Назначить исполнителя
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> История изменений
+                        <span class="badge bg-secondary">{{ history.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if history %}
+                        <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                            {% for change in history %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="small">{{ change.changed_by.username }}</strong>
+                                        <span class="text-muted small">{{ change.change_date|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                </div>
+                                <div class="mt-1">
+                                    {% if change.changed_field == 'status' %}
+                                        <span class="badge bg-secondary">Статус</span>
+                                        <span class="text-danger">{{ change.old_value|default:"—" }}</span>
+                                        <i class="fas fa-arrow-right mx-1"></i>
+                                        <span class="text-success">{{ change.new_value }}</span>
+                                    {% elif change.changed_field == 'executor' %}
+                                        <span class="badge bg-secondary">Исполнитель</span>
+                                        <span class="text-danger">{{ change.old_value|default:"Не назначен" }}</span>
+                                        <i class="fas fa-arrow-right mx-1"></i>
+                                        <span class="text-success">{{ change.new_value|default:"Не назначен" }}</span>
+                                    {% elif change.changed_field == 'comment' %}
+                                        <span class="badge bg-secondary">Комментарий</span>
+                                        <small class="text-muted d-block mt-1">{{ change.new_value|truncatechars:80 }}</small>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ change.changed_field }}</span>
+                                        <small class="text-muted">{{ change.new_value }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-history fa-2x mb-2"></i>
+                            <p>История изменений пуста</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-simple"></i> Статистика</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">Возраст заявки</small>
+                        <p class="fw-bold">{{ request.created_date|timesince }}</p>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Последнее обновление</small>
+                        <p class="fw-bold">{{ request.updated_date|timesince }} назад</p>
+                    </div>
+                    <div>
+                        <small class="text-muted">Всего комментариев</small>
+                        <p class="fw-bold">{{ comments.count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "catalog/crm_base.html" %}
+
+{% block title %}Обновление статуса доставки - CRM{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">🔄 Обновление статуса заказа #{{ object.id }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Информация о заказе:</h5>
+                        <p><strong>Покупатель:</strong> {{ object.user.username }}</p>
+                        <p><strong>Книга:</strong> {{ object.book.title }}</p>
+                        <p><strong>Количество:</strong> {{ object.quantity }}</p>
+                        <p><strong>Адрес доставки:</strong> 
+                            {% if object.delivery_method == 'krasnoyarsk' %}
+                                Красноярск
+                            {% elif object.delivery_method == 'russia' %}
+                                По России
+                            {% else %}
+                                Самовывоз
+                            {% endif %}
+                        </p>
+                        <p><strong>Текущий статус:</strong> {{ object.get_status_display }}</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_status" class="form-label">Новый статус:</label>
+                            <select name="status" id="id_status" class="form-select" required>
+                                {% for code, name in form.fields.status.choices %}
+                                <option value="{{ code }}" {% if code == object.status %}selected{% endif %}>
+                                    {{ name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                {% if object.status == 'assembled' %}
+                                Вы можете изменить статус на "Доставляется"
+                                {% elif object.status == 'shipped' %}
+                                Вы можете изменить статус на "Доставлен"
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                {% if object.status == 'assembled' %}
+                                📦 Начать доставку
+                                {% elif object.status == 'shipped' %}
+                                ✅ Завершить доставку
+                                {% else %}
+                                Сохранить
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'courier_orders' %}" class="btn btn-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
