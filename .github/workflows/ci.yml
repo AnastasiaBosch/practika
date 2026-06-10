@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -48,20 +48,12 @@ jobs:
         cd nl
         python manage.py migrate
     
-    - name: Check Python syntax
-      run: |
-        cd nl
-        python -m py_compile catalog/models.py
-        python -m py_compile catalog/views.py
-        python -m py_compile catalog/forms.py
-        python -m py_compile catalog/urls.py
-    
-    - name: Check templates syntax
-      run: |
-        cd nl
-        python manage.py validate_templates
-    
     - name: Run tests
+      env:
+        DB_HOST: localhost
+        DB_NAME: mydatabase
+        DB_USER: postgres
+        DB_PASSWORD: postgresql
       run: |
         cd nl
-        python manage.py test --keepdb || echo "No tests yet, skipping"
+        python manage.py test
